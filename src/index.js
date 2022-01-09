@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import * as actions from "./store/task/actions";
-import configStore from "./store/store";
+import { Provider, useSelector, useDispatch } from "react-redux";
+import * as actions from "./store/task";
+import createStore from "./store/store";
+import { getErrors } from "./store/errors";
+import { taskChanged, taskDeleted, getLoadingTasks, getTasksIsLoading, getTasks } from "./store/task";
 
-
-const store = configStore();
+const store = createStore();
 
 const App = (params) => {
-    const [state, setState] = useState(store.getState());
-
-    useEffect(() => { store.subscribe(() => { setState(store.getState()) })}, [])
+    const state = useSelector(getTasks())
+    const isLoading = useSelector(getTasksIsLoading())
+    const error = useSelector(getErrors())
+    const dispatch = useDispatch()
+    useEffect(() => {
+       store.dispatch(getLoadingTasks())
+    }, [])
     const taskCompleted = (taskId) => {
-        store.dispatch(actions.taskCompleted(taskId))
+       dispatch(actions.taskCompleted(taskId))
     }
-    const taskChanged = (taskId) => {
-        store.dispatch(actions.taskChanged(taskId))
+    if(error) {
+        return <p>{ error[0] }</p>
     }
-    const taskDeleted = (taskId) => {
-        store.dispatch(actions.taskDeleted(taskId))
+    if(isLoading) {
+        return <h2>Loading...</h2>
     }
+
     return <>
         <h2>App</h2>
         <ul>
@@ -26,8 +33,8 @@ const App = (params) => {
                 <p>{el.title}</p>
                 <p>{`Completed: ${el.completed}`}</p>
                 <button onClick={() => taskCompleted(el.id)} >Change completed</button>
-                <button onClick={() => taskChanged(el.id)} >Change title</button>
-                <button onClick={() => taskDeleted(el.id)} >Delete</button>
+                <button onClick={() => dispatch(taskChanged(el.id))} >Change title</button>
+                <button onClick={() => dispatch(taskDeleted(el.id))} >Delete</button>
                 <hr/>
             </li>)}
         </ul>
@@ -36,7 +43,9 @@ const App = (params) => {
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+      <Provider store={store}>
+          <App />
+      </Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );

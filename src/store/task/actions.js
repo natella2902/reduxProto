@@ -11,3 +11,4 @@ export function taskChanged(id) {
 export function taskDeleted(id) {
     return  {type: actionTypes.taskDeleted, payload: {id}}
 }
+
